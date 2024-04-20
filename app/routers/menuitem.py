@@ -1,11 +1,27 @@
 from typing import Union
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Response,
+    status,
+    UploadFile,
+    File,
+)
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+import shutil
+import os
+
+from ..config import settings
 
 from .. import models
 from .. import schemas
 from .. import oauth2
 from ..database import get_db
+
+UPLOAD_FOLDER = settings.upload_folder
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 router = APIRouter(tags=["MenuItems"])
 
@@ -33,7 +49,7 @@ async def get_all_menu_items(
     "/",
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.MenuItemOut,
-    dependencies=[Depends(oauth2.get_admin)],
+    # dependencies=[Depends(oauth2.get_admin)],
 )
 async def create_menuitem(
     menuitem: schemas.MenuItem,
@@ -65,7 +81,7 @@ async def get_one_menu_item(id: int, db: Session = Depends(get_db)):
 @router.delete(
     "/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(oauth2.get_admin)],
+    # dependencies=[Depends(oauth2.get_admin)],
 )
 async def delete_menu_item(
     id: int,
@@ -86,7 +102,7 @@ async def delete_menu_item(
 @router.put(
     "/{id}",
     response_model=schemas.MenuItemOut,
-    dependencies=[Depends(oauth2.get_admin)],
+    # dependencies=[Depends(oauth2.get_admin)],
 )
 async def update_menu_item(
     id: int,
@@ -103,3 +119,21 @@ async def update_menu_item(
     db.commit()
     updated_menu_item = menu_item_query.first()
     return updated_menu_item
+
+
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        with open(os.path.join(UPLOAD_FOLDER, file.filename), "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        print(os.path.abspath(os.path.join(UPLOAD_FOLDER, file.filename)))
+        return JSONResponse(
+            content={
+                "message": "File uploaded successfully",
+                "file_url": f"{UPLOAD_FOLDER}/{file.filename}",
+            }
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{str(error)}"
+        )

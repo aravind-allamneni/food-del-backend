@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Float, Integer, String, Boolean, null
+import email
+from os import name
+from sqlalchemy import JSON, Column, Float, Integer, String, Boolean, null
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
 from .database import Base
@@ -39,3 +41,20 @@ class Admin(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
     phone_number = Column(String)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, nullable=False, primary_key=True)
+    email = Column(String, nullable=False, unique=True)
+    password = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    phone_number = Column(String, nullable=False)
+    cart = Column(JSON)
+
+    def __repr__(self):
+        return f"<User(id={self.id}, email={self.email}, name={self.email})>"

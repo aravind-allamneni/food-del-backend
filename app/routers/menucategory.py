@@ -24,7 +24,7 @@ async def get_all_menu_categories(db: Session = Depends(get_db)):
     "/",
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.MenuCategoryOut,
-    dependencies=[Depends(oauth2.get_admin)],
+    # dependencies=[Depends(oauth2.get_admin)],
 )
 async def create_menu_category(
     menucategory: schemas.MenuCategory,
@@ -58,7 +58,7 @@ async def get_one_menu_category(id: int, db: Session = Depends(get_db)):
 @router.delete(
     "/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(oauth2.get_admin)],
+    # dependencies=[Depends(oauth2.get_admin)],
 )
 async def delete_menu_category(
     id: int,
@@ -81,7 +81,7 @@ async def delete_menu_category(
 @router.put(
     "/{id}",
     response_model=schemas.MenuCategoryOut,
-    dependencies=[Depends(oauth2.get_admin)],
+    # dependencies=[Depends(oauth2.get_admin)],
 )
 async def update_menu_category(
     id: int,
