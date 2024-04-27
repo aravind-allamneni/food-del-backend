@@ -1,5 +1,3 @@
-import email
-from pyexpat import model
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from sqlalchemy.orm import Session
@@ -67,7 +65,14 @@ async def create_user(user: schemas.UserIn, db: Session = Depends(get_db)):
 
 
 @router.get("/{id}", response_model=schemas.UserOut)
-async def get_user(id: int, db: Session = Depends(get_db)):
+async def get_user(
+    id: int, db: Session = Depends(get_db), current_user=Depends(oauth2.get_user)
+):
+    if current_user.id != id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You are not authorised to access other users data",
+        )
     try:
         user = db.query(models.User).filter(models.User.id == id).first()
         if not user:

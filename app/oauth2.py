@@ -1,3 +1,4 @@
+from email import header
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -58,3 +59,26 @@ def get_admin(
         email=logged_in_user.email,
         created_at=logged_in_user.created_at,
     )
+
+
+def get_user(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        token_data = verify_access_token(token, credentials_exception)
+        logged_in_user = (
+            db.query(models.User).filter(models.User.id == token_data.id).first()
+        )
+        if not logged_in_user:
+            raise credentials_exception
+        return logged_in_user
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal Server Error: {str(error)}",
+        )
