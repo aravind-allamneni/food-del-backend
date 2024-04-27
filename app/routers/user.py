@@ -1,4 +1,5 @@
 import email
+from pyexpat import model
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from sqlalchemy.orm import Session
@@ -64,3 +65,19 @@ async def create_user(user: schemas.UserIn, db: Session = Depends(get_db)):
     # return newly created user back to caller
     return new_user
 
+
+@router.get("/{id}", response_model=schemas.UserOut)
+async def get_user(id: int, db: Session = Depends(get_db)):
+    try:
+        user = db.query(models.User).filter(models.User.id == id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with id: {id} not found",
+            )
+        return user
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal Server Error: {error}",
+        )
