@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-
+from typing import Dict
 from sqlalchemy.orm import Session
 
 from .. import models
@@ -49,7 +49,7 @@ async def create_user(user: schemas.UserIn, db: Session = Depends(get_db)):
     # build the User object with hashed password and empty cart
     hashed_password = utils.hash(user.password)
     user.password = hashed_password
-    user.cart = {}
+    # user.cart = {}
     new_user = models.User(**user.model_dump())
     # push the new user to db
     try:
@@ -66,7 +66,9 @@ async def create_user(user: schemas.UserIn, db: Session = Depends(get_db)):
 
 @router.get("/{id}", response_model=schemas.UserOut)
 async def get_user(
-    id: int, db: Session = Depends(get_db), current_user=Depends(oauth2.get_user)
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_user),
 ):
     if current_user.id != id:
         raise HTTPException(
@@ -85,4 +87,90 @@ async def get_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal Server Error: {error}",
+        )
+
+
+@router.put("/{id}", response_model=schemas.UserOut)
+async def update_user(
+    id: int,
+    user: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_user),
+):
+    if current_user.id != id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Not allowed to modify others users data",
+        )
+    user_query = db.query(models.User).filter(models.User.id == id)
+    try:
+        existing_user = user_query.first()
+        if not existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"no user with id: {id} found",
+            )
+        user_updates = {}
+        if user.name:
+            user_updates.update({"name", user.name})
+        if user.phone_number:
+            user_updates.update({"phone_number", user.phone_number})
+        if user.cart:
+            user_updates.update({"cart": user.cart})
+        user_query.update(user_updates, synchronize_session=False)
+        db.commit()
+        updated_user = user_query.first()
+        return updated_user
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal Server Error: {str(error)}",
+        )
+
+
+@router.get("/{id}/cart", response_model=dict)
+async def get_user_cart(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_user),
+):
+    if current_user.id != id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Not authorized to access cart",
+        )
+    # print(current_user.cart)
+    return current_user.cart
+
+
+@router.post("/{id}/cart", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def add_user_cart(
+    id: int,
+    cart: Dict[str, int],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_user),
+):
+    if current_user.id != id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Not allowed to modify others users data",
+        )
+    user_query = db.query(models.User).filter(models.User.id == id)
+    try:
+        existing_user = user_query.first()
+        if not existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"no user with id: {id} found",
+            )
+        user_updates = {}
+        user_updates.update({"cart": cart})
+        user_query.update(user_updates, synchronize_session=False)
+        db.commit()
+        updated_user = user_query.first()
+        return updated_user.cart
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal Server Error: {str(error)}",
         )

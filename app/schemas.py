@@ -1,7 +1,6 @@
-from lib2to3.pgen2.token import OP
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Annotated, Optional, Dict, Any
+from typing import Optional, Dict
 
 
 class MenuItem(BaseModel):
@@ -68,7 +67,13 @@ class UserIn(User):
     password: str
     name: str
     phone_number: str
-    cart: Dict[str, Any] = {}
+    cart: Dict[str, int] = {}
+
+
+class UserUpdate(BaseModel):
+    name: str | None = None
+    phone_number: str | None = None
+    cart: Dict[str, int] | None
 
 
 class UserLogin(User):
@@ -80,4 +85,4 @@ class UserOut(User):
     name: str
     created_at: datetime
     phone_number: str
-    cart: Dict[str, Any]
+    cart: Dict[str, int]
