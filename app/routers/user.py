@@ -143,8 +143,8 @@ async def get_user_cart(
     return current_user.cart
 
 
-@router.post("/{id}/cart", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def add_user_cart(
+@router.post("/{id}/cart", response_model=dict)
+async def add_to_cart(
     id: int,
     cart: Dict[str, int],
     db: Session = Depends(get_db),
@@ -165,9 +165,12 @@ async def add_user_cart(
             )
         user_updates = {}
         user_updates.update({"cart": cart})
+        print(f"user_updates: {user_updates}")
         user_query.update(user_updates, synchronize_session=False)
         db.commit()
         updated_user = user_query.first()
+        print(f"updated_user: {updated_user}")
+        print(f"updated_user.cart: {updated_user.cart}")
         return updated_user.cart
     except Exception as error:
         raise HTTPException(
