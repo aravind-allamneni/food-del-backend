@@ -1,6 +1,4 @@
-import email
-from os import name
-from sqlalchemy import JSON, Column, Float, Integer, String, Boolean, null
+from sqlalchemy import ARRAY, JSON, Column, Float, Integer, String, Boolean, null
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
 from .database import Base
@@ -58,3 +56,18 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, name={self.email})>"
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, nullable=False, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    items = Column(ARRAY(Integer), nullable=False)
+    amount = Column(Float, nullable=False)
+    address = Column(JSON, nullable=False)
+    status = Column(String, nullable=False, server_default="Processing")
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    payment = Column(Boolean, server_default=text("False"))
