@@ -165,12 +165,9 @@ async def add_to_cart(
             )
         user_updates = {}
         user_updates.update({"cart": cart})
-        print(f"user_updates: {user_updates}")
         user_query.update(user_updates, synchronize_session=False)
         db.commit()
         updated_user = user_query.first()
-        print(f"updated_user: {updated_user}")
-        print(f"updated_user.cart: {updated_user.cart}")
         return updated_user.cart
     except Exception as error:
         raise HTTPException(
