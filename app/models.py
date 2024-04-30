@@ -63,7 +63,7 @@ class Order(Base):
 
     id = Column(Integer, nullable=False, primary_key=True)
     user_id = Column(Integer, nullable=False)
-    items = Column(ARRAY(Integer), nullable=False)
+    items = Column(ARRAY(JSON), nullable=False)
     amount = Column(Float, nullable=False)
     address = Column(JSON, nullable=False)
     status = Column(String, nullable=False, server_default="Processing")

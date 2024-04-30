@@ -10,6 +10,7 @@ from .routers import menuitem
 from .routers import menucategory
 from .routers import admin
 from .routers import auth
+from .routers import order
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -36,6 +37,7 @@ app.include_router(menucategory.router, prefix="/menucategories")
 app.include_router(admin.router, prefix="/admin")
 app.include_router(auth.router, prefix="/login")
 app.include_router(user.router, prefix="/users")
+app.include_router(order.router, prefix="/orders")
 
 
 @app.get("/")

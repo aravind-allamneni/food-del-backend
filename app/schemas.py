@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Any, Optional, Dict
 
 
 class MenuItem(BaseModel):
@@ -86,3 +86,17 @@ class UserOut(User):
     created_at: datetime
     phone_number: str
     cart: Dict[str, int]
+
+
+class OrderIn(BaseModel):
+    items: list[dict[str, Any]]
+    amount: float
+    address: dict
+
+
+class OrderOut(OrderIn):
+    id: int
+    user_id: int
+    status: str
+    payment: bool
+    created_at: datetime
