@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_mins: int
     upload_folder: str
+    razorpay_key_id: str
+    razorpay_key_secret: str
 
     class Config:
         env_file = ".env"

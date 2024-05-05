@@ -1,13 +1,13 @@
-from copyreg import constructor
-from urllib import response
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+import datetime
 
 from .. import models
 from .. import schemas
 from .. import oauth2
 from ..database import get_db
 from . import user
+from ..payment import create_razorpay_order
 
 router = APIRouter(tags=["Orders"])
 
@@ -18,11 +18,18 @@ async def place_order(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_user),
 ):
+    razorpay_order = create_razorpay_order(
+        order_details.amount,
+        "INR",
+        f"{current_user.id}_{datetime.datetime.now()}",
+        {"notes:": "Notes"},
+    )
     new_order = models.Order(
         user_id=current_user.id,
         items=order_details.items,
         amount=order_details.amount,
         address=order_details.address,
+        rz_id=razorpay_order["id"],
     )
     try:
         db.add(new_order)
@@ -31,7 +38,6 @@ async def place_order(
         response = await user.add_to_cart(
             id=current_user.id, cart={}, db=db, current_user=current_user
         )
-        print(response)
         return new_order
     except Exception as error:
         print(f"Error Order cound not be placed: {error}")

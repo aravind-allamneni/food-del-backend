@@ -100,3 +100,4 @@ class OrderOut(OrderIn):
     status: str
     payment: bool
     created_at: datetime
+    rz_id: str

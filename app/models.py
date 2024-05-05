@@ -71,3 +71,4 @@ class Order(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
     payment = Column(Boolean, server_default=text("False"))
+    rz_id = Column(String, nullable=False, server_default="_")
