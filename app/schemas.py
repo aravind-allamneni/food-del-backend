@@ -101,3 +101,9 @@ class OrderOut(OrderIn):
     payment: bool
     created_at: datetime
     rz_id: str
+
+
+class Transaction(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str

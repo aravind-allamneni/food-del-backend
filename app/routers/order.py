@@ -7,7 +7,7 @@ from .. import schemas
 from .. import oauth2
 from ..database import get_db
 from . import user
-from ..payment import create_razorpay_order
+from ..payment import create_razorpay_order, verify_razorpay_payment
 
 router = APIRouter(tags=["Orders"])
 
@@ -44,4 +44,37 @@ async def place_order(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal Server Error: {error}",
+        )
+
+
+@router.post("/verify_payment", status_code=status.HTTP_201_CREATED)
+async def verify_transaction(
+    transaction: schemas.Transaction,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_user),
+):
+    paymentSucess = verify_razorpay_payment(
+        transaction.razorpay_order_id,
+        transaction.razorpay_payment_id,
+        transaction.razorpay_signature,
+    )
+    print(paymentSucess)
+    if not paymentSucess:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"Payment not successfull try again",
+        )
+    new_transaction = models.Transaction(
+        razorpay_order_id=transaction.razorpay_order_id,
+        razorpay_payment_id=transaction.razorpay_payment_id,
+        razorpay_signature=transaction.razorpay_signature,
+        payment_status=paymentSucess,
+    )
+    try:
+        db.add(new_transaction)
+        db.commit()
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Payment status: {paymentSucess} Veiify payment with bank.",
         )

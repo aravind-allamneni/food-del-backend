@@ -1,6 +1,8 @@
 from sqlalchemy import ARRAY, JSON, Column, Float, Integer, String, Boolean, null
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
+
+from app import payment
 from .database import Base
 
 
@@ -72,3 +74,16 @@ class Order(Base):
     )
     payment = Column(Boolean, server_default=text("False"))
     rz_id = Column(String, nullable=False, server_default="_")
+
+
+class Transaction(Base):
+    __tablename__ = "transactions"
+
+    id = Column(Integer, nullable=False, primary_key=True)
+    razorpay_payment_id = Column(String, nullable=False)
+    razorpay_order_id = Column(String, nullable=False)
+    razorpay_signature = Column(String, nullable=False)
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    payment_status = Column(String, nullable=False)
