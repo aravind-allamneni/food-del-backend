@@ -47,6 +47,29 @@ async def place_order(
         )
 
 
+@router.get("/", status_code=status.HTTP_200_OK, response_model=list[schemas.OrderOut])
+async def get_orders(
+    db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_user)
+):
+    try:
+        orders = (
+            db.query(models.Order)
+            .filter(models.Order.user_id == current_user.id)
+            .order_by(models.Order.created_at)
+            .all()
+        )
+        if not orders:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Not found"
+            )
+        return orders
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal Server Error: {error}",
+        )
+
+
 @router.post("/verify_payment", status_code=status.HTTP_201_CREATED)
 async def verify_transaction(
     transaction: schemas.Transaction,
