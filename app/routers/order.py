@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 import datetime
 
 from .. import models
@@ -55,7 +56,7 @@ async def get_orders(
         orders = (
             db.query(models.Order)
             .filter(models.Order.user_id == current_user.id)
-            .order_by(models.Order.created_at)
+            .order_by(desc(models.Order.created_at))
             .all()
         )
         if not orders:
