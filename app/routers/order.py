@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 import datetime
@@ -9,6 +9,7 @@ from .. import oauth2
 from ..database import get_db
 from . import user
 from ..payment import create_razorpay_order, verify_razorpay_payment
+from app import payment
 
 router = APIRouter(tags=["Orders"])
 
@@ -55,14 +56,14 @@ async def get_orders(
     try:
         orders = (
             db.query(models.Order)
-            .filter(models.Order.user_id == current_user.id)
+            .filter(
+                models.Order.user_id == current_user.id, models.Order.payment == True
+            )
             .order_by(desc(models.Order.created_at))
             .all()
         )
         if not orders:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=f"Not found"
-            )
+            return Response(status_code=status.HTTP_404_NOT_FOUND)
         return orders
     except Exception as error:
         raise HTTPException(
@@ -82,7 +83,6 @@ async def verify_transaction(
         transaction.razorpay_payment_id,
         transaction.razorpay_signature,
     )
-    print(paymentSucess)
     if not paymentSucess:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
@@ -96,6 +96,9 @@ async def verify_transaction(
     )
     try:
         db.add(new_transaction)
+        db.query(models.Order).filter(
+            models.Order.rz_id == transaction.razorpay_order_id
+        ).update({"payment": True})
         db.commit()
     except Exception as error:
         raise HTTPException(
